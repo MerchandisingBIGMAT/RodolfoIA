@@ -16,53 +16,47 @@ h1{font-size:24px;margin:4px 0 2px;background:linear-gradient(90deg,var(--ac),va
 .sub{color:var(--mut);font-size:14px;margin:0 0 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
 label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
-textarea,select,input[type=number],input[type=text]{width:100%;background:#0e1220;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+textarea,select,input[type=number],input[type=text],input[type=password]{width:100%;background:#0e1220;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
 textarea{min-height:130px;resize:vertical}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{font:inherit;border:0;border-radius:12px;padding:13px 16px;color:#fff;background:linear-gradient(90deg,var(--ac),#5b8cff);font-weight:600;width:100%;margin-top:12px}
 button.sec{background:#222942;color:var(--tx)}
 button:disabled{opacity:.5}
-.chk{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--tx);font-size:14px}
 .bar{height:8px;background:#0e1220;border-radius:6px;overflow:hidden;margin-top:10px}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .3s}
-#log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mut);max-height:170px;overflow:auto;margin-top:10px;white-space:pre-wrap}
+#log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mut);max-height:190px;overflow:auto;margin-top:10px;white-space:pre-wrap}
 #log .e{color:var(--err)} #log .o{color:var(--ok)}
-canvas,video{width:100%;border-radius:12px;background:#000;display:block}
+canvas,video{width:100%;border-radius:12px;background:#000;display:block;margin-top:8px}
 details summary{cursor:pointer;color:var(--mut);font-size:14px}
 .hide{display:none}
 .ex{font-size:13px;color:var(--ac2);cursor:pointer;margin-top:6px;text-decoration:underline}
+.note{font-size:13px;color:var(--mut);margin:6px 0 0}
+#resume{border-color:var(--ac)}
 </style>
 </head>
 <body>
 <main>
   <h1>RodolfoIA</h1>
-  <p class="sub">Describe a tus personajes y la escena. La IA escribe el diálogo, dibuja cada plano y cada personaje habla con su propia voz en español. Sin límite de duración.</p>
+  <p class="sub">Describe la situación y los personajes. La IA genera vídeo real: se mueven, hablan en español y suena el audio. Los clips se unen en un solo vídeo.</p>
+
+  <div class="card hide" id="resume">
+    <b>Tienes un vídeo a medias</b>
+    <p class="note" id="rinfo"></p>
+    <button id="rgo">Continuar</button>
+    <button id="rdel" class="sec">Descartar</button>
+  </div>
 
   <div class="card">
     <label for="prompt">¿Qué quieres que pase?</label>
     <textarea id="prompt" placeholder="Ej.: Dos gatos humanizados, una chica y un chico, en una cafetería. Ella le cuenta un chiste y él se ríe a carcajadas."></textarea>
     <div class="ex" id="ex">Usar ejemplo de los gatos</div>
     <div class="row">
-      <div><label for="n">Intervenciones (más = más largo)</label><input id="n" type="number" min="2" max="200" value="10"></div>
-      <div><label for="fmt">Formato</label>
-        <select id="fmt"><option value="1280x720">Horizontal 16:9</option><option value="720x1280">Vertical 9:16</option><option value="1024x1024">Cuadrado 1:1</option></select></div>
+      <div><label for="n">Número de clips</label><input id="n" type="number" min="1" max="40" value="3"></div>
+      <div><label for="sec">Segundos por clip</label><input id="sec" type="number" min="3" max="10" value="6"></div>
     </div>
-    <div class="row">
-      <div><label for="vf">Voz femenina</label>
-        <select id="vf"><option value="nova">Nova</option><option value="shimmer">Shimmer</option><option value="fable">Fable</option></select></div>
-      <div><label for="vm">Voz masculina</label>
-        <select id="vm"><option value="onyx">Onyx (grave)</option><option value="echo">Echo</option><option value="alloy">Alloy</option></select></div>
-    </div>
-    <label for="style">Estilo visual</label>
-    <select id="style">
-      <option value="3D animated movie style, Pixar-like, vibrant colors, soft lighting">Animación 3D</option>
-      <option value="cinematic photorealistic, dramatic lighting, 35mm film">Cinematográfico</option>
-      <option value="anime style, detailed background, vivid colors">Anime</option>
-      <option value="cartoon illustration, bold outlines, flat bright colors">Dibujos animados</option>
-      <option value="oil painting, rich textures, painterly">Pintura al óleo</option>
-      <option value="comic book illustration, bold ink lines, flat colors">Cómic</option>
-    </select>
-    <label class="chk"><input type="checkbox" id="subs" checked> Subtítulos con el nombre de quien habla</label>
+    <label for="tok">Clave de Hugging Face (gratis, recomendada)</label>
+    <input id="tok" type="password" placeholder="hf_..." autocomplete="off">
+    <p class="note">Con cuenta gratuita tienes más cuota diaria que sin ella. Crea una clave de tipo «Read» en huggingface.co/settings/tokens. Se guarda solo en este móvil.</p>
     <button id="go">Crear vídeo</button>
     <button id="stop" class="sec hide">Cancelar</button>
     <div class="bar"><i id="pb"></i></div>
@@ -70,23 +64,26 @@ details summary{cursor:pointer;color:var(--mut);font-size:14px}
   </div>
 
   <div class="card hide" id="out">
-    <canvas id="cv" width="1280" height="720"></canvas>
+    <b>Vídeo final</b>
+    <canvas id="cv" class="hide"></canvas>
     <video id="vid" controls playsinline class="hide"></video>
+    <button id="merge" class="sec hide">Unir los clips en un vídeo</button>
     <button id="save" class="hide">Guardar / compartir vídeo</button>
+    <div id="clips"></div>
   </div>
 
   <div class="card">
     <details>
       <summary>Ajustes avanzados y diagnóstico</summary>
+      <label for="space">Espacio de Hugging Face (modelo de vídeo)</label><input type="text" id="space">
       <label for="u_text">Servicio de texto (guion)</label><input type="text" id="u_text">
-      <label for="u_img">Servicio de imágenes</label><input type="text" id="u_img">
-      <label for="u_tts">Servicio de voz</label><input type="text" id="u_tts">
-      <button class="sec" id="test">Probar servicios</button>
+      <button class="sec" id="api">Ver cómo se llama al espacio</button>
       <button class="sec" id="reset">Restaurar valores</button>
     </details>
   </div>
-  <p class="sub">Mantén la pestaña abierta y la pantalla encendida mientras se graba: el vídeo se graba a tiempo real.</p>
+  <p class="sub">Mantén la pestaña abierta mientras se genera. La cuota gratuita diaria limita cuántos clips salen cada día; lo ya generado se guarda y puedes continuar al día siguiente.</p>
 </main>
+<script src="gradio.js"></script>
 <script src="app.js"></script>
 <script>if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{})</script>
 </body>
